@@ -3,29 +3,45 @@
 namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
-use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
 {
-    use PasswordValidationRules, ProfileValidationRules;
+    use PasswordValidationRules;
 
     /**
-     * Validate and create a newly registered user.
+     * Validate and create a newly registered collector.
      *
-     * @param  array<string, string>  $input
+     * @param array<string, string> $input
      */
     public function create(array $input): User
     {
         Validator::make($input, [
-            ...$this->profileRules(),
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique(User::class),
+            ],
+
             'password' => $this->passwordRules(),
         ])->validate();
 
         return User::create([
-            'name' => $input['name'],
+            // Keep Laravel's name field populated for existing starter-kit components.
+            'name' => $input['username'],
+
+            'username' => $input['username'],
             'email' => $input['email'],
             'password' => $input['password'],
         ]);
