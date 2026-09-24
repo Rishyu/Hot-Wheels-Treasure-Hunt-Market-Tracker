@@ -12,7 +12,7 @@ use Livewire\Component;
 new #[Title('Profile settings')] class extends Component {
     use ProfileValidationRules;
 
-    public string $name = '';
+    public string $username = '';
     public string $email = '';
 
     /**
@@ -20,7 +20,7 @@ new #[Title('Profile settings')] class extends Component {
      */
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
+        $this->username = Auth::user()->username ?? '';
         $this->email = Auth::user()->email;
     }
 
@@ -32,6 +32,9 @@ new #[Title('Profile settings')] class extends Component {
         $user = Auth::user();
 
         $validated = $this->validate($this->profileRules($user->id));
+
+        // Keep Laravel's existing name field synchronized with the username.
+        $validated['name'] = $validated['username'];
 
         $user->fill($validated);
 
@@ -81,9 +84,10 @@ new #[Title('Profile settings')] class extends Component {
 
     <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your username and email address')"
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+        <!-- Username required by user profile requirement 2.2 -->
+        <flux:input wire:model="username" :label="__('Username')" type="text" required autofocus autocomplete="username"/>
 
             <div>
                 <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
