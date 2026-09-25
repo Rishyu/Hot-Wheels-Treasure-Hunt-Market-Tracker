@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int $id
@@ -68,5 +69,14 @@ class User extends Authenticatable implements PasskeyUser
         return Str::length($initials) > 1
             ? Str::substr($initials, 0, 1).Str::substr($initials, -1)
             : $initials;
+    }
+
+    /**
+     * Get the Hot Wheels cars saved by this collector.
+     */
+    public function favorites(): BelongsToMany
+    {
+        return $this->belongsToMany(Car::class, 'favorites')
+            ->withTimestamps();
     }
 }

@@ -82,22 +82,44 @@ new #[Title('Profile settings')] class extends Component {
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
+    <flux:heading level="2" class="sr-only">
+        {{ __('Profile settings') }}
+    </flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your username and email address')"
+    <x-pages::settings.layout
+        :heading="__('Profile')"
+        :subheading="__('Update your username and email address')"
+    >
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-        <!-- Username required by user profile requirement 2.2 -->
-        <flux:input wire:model="username" :label="__('Username')" type="text" required autofocus autocomplete="username"/>
+
+            {{-- Username required by user profile requirement 2.2 --}}
+            <flux:input
+                wire:model="username"
+                :label="__('Username')"
+                type="text"
+                required
+                autofocus
+                autocomplete="username"
+            />
 
             <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+                <flux:input
+                    wire:model="email"
+                    :label="__('Email')"
+                    type="email"
+                    required
+                    autocomplete="email"
+                />
 
                 @if ($this->hasUnverifiedEmail)
                     <div>
                         <flux:text class="mt-4">
                             {{ __('Your email address is unverified.') }}
 
-                            <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
+                            <flux:link
+                                class="text-sm cursor-pointer"
+                                wire:click.prevent="resendVerificationNotification"
+                            >
                                 {{ __('Click here to re-send the verification email.') }}
                             </flux:link>
                         </flux:text>
@@ -113,16 +135,65 @@ new #[Title('Profile settings')] class extends Component {
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
+                    <flux:button
+                        variant="primary"
+                        type="submit"
+                        class="w-full"
+                        data-test="update-profile-button"
+                    >
                         {{ __('Save') }}
                     </flux:button>
                 </div>
-
             </div>
+
         </form>
+
+        {{-- Saved favorite Hot Wheels --}}
+        <div class="mt-8">
+            <div class="mb-4">
+                <flux:heading size="lg">
+                    {{ __('Saved Favorites') }}
+                </flux:heading>
+
+                <flux:text class="mt-1">
+                    {{ __('Hot Wheels cars saved to your favorites list.') }}
+                </flux:text>
+            </div>
+
+            @php
+                $favoriteCars = auth()->user()->favorites;
+            @endphp
+
+            @if ($favoriteCars->isEmpty())
+                <div class="rounded-lg border p-4">
+                    <flux:text>
+                        {{ __('You have not saved any favorite cars yet.') }}
+                    </flux:text>
+                </div>
+            @else
+                <div class="grid gap-4 md:grid-cols-2">
+                    @foreach ($favoriteCars as $car)
+                        <div class="rounded-lg border p-4">
+                            <flux:heading size="sm">
+                                {{ $car->model_name }}
+                            </flux:heading>
+
+                            <flux:text>
+                                {{ $car->series_name }}
+                            </flux:text>
+
+                            <div class="mt-2 text-sm">
+                                {{ $car->release_year }} · {{ $car->category }}
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
 
         @if ($this->showDeleteUser)
             <livewire:pages::settings.delete-user-form />
         @endif
+
     </x-pages::settings.layout>
 </section>
