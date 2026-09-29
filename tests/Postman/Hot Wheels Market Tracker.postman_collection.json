@@ -1,0 +1,238 @@
+{
+  "info": {
+    "_postman_id": "b1086528-7a2a-471e-b1be-237af4e934f3",
+    "name": "Hot Wheels Market Tracker",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58591071",
+    "_collection_link": "https://go.postman.co/collection/58591071-b1086528-7a2a-471e-b1be-237af4e934f3?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 - Get Registration Page",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Registration page loads\", function () {\n    pm.response.to.have.status(200);\n});\n\nconst html = pm.response.text();\n\nconst match = html.match(/name=\"_token\"\\s+value=\"([^\"]+)\"/);\n\nif (match) {\n    pm.environment.set(\"csrf_token\", match[1]);\n}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "02 - Register Collector",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Collector registration request succeeds\", function () {\n    pm.expect(pm.response.code).to.be.oneOf([200, 302]);\n});\n\npm.test(\"Registration does not return server error\", function () {\n    pm.expect(pm.response.code).to.be.below(500);\n});\n\n// Clear Laravel session after registration\nconst jar = pm.cookies.jar();\n\njar.clear(\"http://127.0.0.1:8000\", function (error) {\n    if (error) {\n        console.log(\"Cookie clear error:\", error);\n    } else {\n        console.log(\"Cookies cleared after registration\");\n    }\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "_token",
+              "value": " {{csrf_token}}"
+            },
+            {
+              "key": "username",
+              "value": "postmancollector"
+            },
+            {
+              "key": "email",
+              "value": "postmancollector@example.com"
+            },
+            {
+              "key": "password",
+              "value": "password"
+            },
+            {
+              "key": "password_confirmation",
+              "value": "password"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "03 - Get Login Page",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Login page loads\", function () {\n    pm.response.to.have.status(200);\n});\n\nconst html = pm.response.text();\n\nconst match = html.match(/name=\"_token\"\\s+value=\"([^\"]+)\"/);\n\nif (match) {\n    pm.environment.set(\"csrf_token\", match[1]);\n}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "04 - Valid Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Valid login succeeds\", function () {\n    pm.expect(pm.response.code).to.be.oneOf([200, 302]);\n});\n\npm.test(\"Login does not return server error\", function () {\n    pm.expect(pm.response.code).to.be.below(500);\n});\n\n// Clear authenticated session after successful login\nconst jar = pm.cookies.jar();\n\njar.clear(\"http://127.0.0.1:8000\", function (error) {\n    if (error) {\n        console.log(\"Cookie clear error:\", error);\n    } else {\n        console.log(\"Cookies cleared after valid login\");\n    }\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "_token",
+              "value": "{{csrf_token}}"
+            },
+            {
+              "key": "email",
+              "value": "postmancollector@example.com"
+            },
+            {
+              "key": "password",
+              "value": "password"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "05 - Get Login Page for Invalid Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Login page loads before invalid login\", function () {\n    pm.response.to.have.status(200);\n});\n\nconst html = pm.response.text();\n\n// Look for Laravel hidden CSRF field first\nlet match = html.match(/name=\"_token\"\\s+value=\"([^\"]+)\"/);\n\n// Fallback in case Laravel outputs a csrf-token meta tag\nif (!match) {\n    match = html.match(/name=\"csrf-token\"\\s+content=\"([^\"]+)\"/);\n}\n\npm.test(\"Fresh CSRF token was found\", function () {\n    pm.expect(match).to.not.be.null;\n});\n\nif (match) {\n    pm.environment.set(\"csrf_token\", match[1]);\n    console.log(\"Fresh CSRF token:\", match[1]);\n}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "06 - Invalid Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Invalid login is rejected safely\", function () {\n    pm.expect(pm.response.code).to.be.oneOf([200, 302, 422]);\n});\n\npm.test(\"Invalid login does not cause server error\", function () {\n    pm.expect(pm.response.code).to.be.below(500);\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "_token",
+              "value": "{{csrf_token}}"
+            },
+            {
+              "key": "email",
+              "value": "postmancollector@example.com"
+            },
+            {
+              "key": "password",
+              "value": "wrongpassword"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "login"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
