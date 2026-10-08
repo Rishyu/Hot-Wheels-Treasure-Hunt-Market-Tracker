@@ -91,6 +91,81 @@
                     </form>
                 @endif
             </div>
+            <div class="mt-8 border-t pt-6">
+                <flux:heading size="lg">
+                    {{ __('Submit Pricing') }}
+                </flux:heading>
+
+                <flux:text class="mt-2">
+                    {{ __('Submit a price you have found for this Hot Wheels car.') }}
+                </flux:text>
+
+                @if (session('pricing_status'))
+                    <div class="mt-4 rounded-lg border p-4">
+                        {{ session('pricing_status') }}
+                    </div>
+                @endif
+
+                <form
+                    method="POST"
+                    action="{{ route('cars.pricing.store', $car) }}"
+                    class="mt-6 space-y-5"
+                >
+                    @csrf
+
+                    <flux:input
+                        name="price"
+                        :label="__('Price')"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        :value="old('price')"
+                        required
+                    />
+
+                    @error('price')
+                        <div class="text-sm text-red-600">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                    <flux:input
+                        name="currency"
+                        :label="__('Currency')"
+                        type="text"
+                        maxlength="3"
+                        :value="old('currency', 'CAD')"
+                        required
+                    />
+
+                    @error('currency')
+                        <div class="text-sm text-red-600">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                    <flux:input
+                        name="submission_date"
+                        :label="__('Date')"
+                        type="date"
+                        :value="old('submission_date', now()->toDateString())"
+                        required
+                    />
+
+                    @error('submission_date')
+                        <div class="text-sm text-red-600">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                    <flux:button
+                        type="submit"
+                        variant="primary"
+                    >
+                        {{ __('Submit Price') }}
+                    </flux:button>
+                </form>
+            </div>
 
         </div>
     </div>

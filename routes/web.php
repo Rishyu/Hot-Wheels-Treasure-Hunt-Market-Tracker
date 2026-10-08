@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\EnsureUserIsAdministrator;
 use App\Http\Controllers\CarController;
+use App\Http\Controllers\PriceSubmissionController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -28,4 +29,9 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/cars/{car}/favorite', [CarController::class, 'unfavorite'])
         ->name('cars.unfavorite');
+    
+    Route::post(
+        '/cars/{car}/pricing',
+        [PriceSubmissionController::class, 'store']
+    )->name('cars.pricing.store');
 });
