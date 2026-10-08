@@ -15,6 +15,7 @@ use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -78,5 +79,12 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->belongsToMany(Car::class, 'favorites')
             ->withTimestamps();
+    }
+    /**
+     * Pricing submitted by this collector.
+     */
+    public function priceSubmissions(): HasMany
+    {
+        return $this->hasMany(PriceSubmission::class);
     }
 }
