@@ -10,6 +10,12 @@
             </flux:button>
         </div>
 
+        @if (session('status'))
+            <div class="mb-6 rounded-lg border p-4">
+                {{ session('status') }}
+            </div>
+        @endif
+
         <div class="rounded-xl border p-6">
 
             <div class="mb-6 flex items-start justify-between gap-4">
@@ -53,7 +59,39 @@
                 </div>
             </div>
 
-        </div>
+            <div class="mt-6">
+                @if ($isFavorite)
+                    <form
+                        method="POST"
+                        action="{{ route('cars.unfavorite', $car) }}"
+                    >
+                        @csrf
+                        @method('DELETE')
 
+                        <flux:button
+                            type="submit"
+                            variant="danger"
+                        >
+                            {{ __('Remove Favorite') }}
+                        </flux:button>
+                    </form>
+                @else
+                    <form
+                        method="POST"
+                        action="{{ route('cars.favorite', $car) }}"
+                    >
+                        @csrf
+
+                        <flux:button
+                            type="submit"
+                            variant="primary"
+                        >
+                            {{ __('Save Favorite') }}
+                        </flux:button>
+                    </form>
+                @endif
+            </div>
+
+        </div>
     </div>
 </x-layouts::app>

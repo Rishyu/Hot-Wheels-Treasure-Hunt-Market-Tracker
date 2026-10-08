@@ -22,4 +22,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/cars/{car}', [CarController::class, 'show'])
         ->name('cars.show');
+
+    Route::post('/cars/{car}/favorite', [CarController::class, 'favorite'])
+        ->name('cars.favorite');
+
+    Route::delete('/cars/{car}/favorite', [CarController::class, 'unfavorite'])
+        ->name('cars.unfavorite');
 });
