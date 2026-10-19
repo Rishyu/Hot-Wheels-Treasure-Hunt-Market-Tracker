@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\EnsureUserIsAdministrator;
 use App\Http\Controllers\CarController;
 use App\Http\Controllers\PriceSubmissionController;
+use App\Http\Controllers\AdminPricingController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -34,4 +35,23 @@ Route::middleware('auth')->group(function () {
         '/cars/{car}/pricing',
         [PriceSubmissionController::class, 'store']
     )->name('cars.pricing.store');
+});
+
+Route::middleware([
+    'auth',
+    EnsureUserIsAdministrator::class,
+])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/pricing', [AdminPricingController::class, 'index'])
+        ->name('pricing.index');
+
+    Route::patch(
+        '/pricing/{submission}/approve',
+        [AdminPricingController::class, 'approve']
+    )->name('pricing.approve');
+
+    Route::patch(
+        '/pricing/{submission}/reject',
+        [AdminPricingController::class, 'reject']
+    )->name('pricing.reject');
 });
