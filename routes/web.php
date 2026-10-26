@@ -6,6 +6,7 @@ use App\Http\Controllers\CarController;
 use App\Http\Controllers\PriceSubmissionController;
 use App\Http\Controllers\AdminPricingController;
 use App\Http\Controllers\AdminCarController;
+use App\Http\Controllers\AdminLogController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -101,4 +102,13 @@ Route::middleware([
 
     Route::delete('/cars/{car}', [AdminCarController::class, 'destroy'])
         ->name('cars.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Error Logs
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/logs', [AdminLogController::class, 'index'])
+    ->name('logs.index');
 });
