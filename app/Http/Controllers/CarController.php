@@ -10,25 +10,137 @@ use Illuminate\View\View;
 class CarController extends Controller
 {
     /**
-     * Display all Hot Wheels cars for collectors.
+     * Display the car catalog with searching,
+     * filtering, and sorting.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $cars = Car::query()
-            ->orderByDesc('release_year')
+        $query = Car::query()
+            ->withAvg('approvedPrices', 'price');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search by Model Name
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('model')) {
+            $query->where(
+                'model_name',
+                'like',
+                '%' . $request->model . '%'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search by Series Name
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('series')) {
+            $query->where(
+                'series_name',
+                'like',
+                '%' . $request->series . '%'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filter by Release Year
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('year')) {
+            $query->where(
+                'release_year',
+                $request->year
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filter by Category
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('category')) {
+            $query->where(
+                'category',
+                $request->category
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sorting
+        |--------------------------------------------------------------------------
+        */
+
+        switch ($request->get('sort', 'year_desc')) {
+
+            case 'year_asc':
+                $query->orderBy('release_year');
+                break;
+
+            case 'price_asc':
+                // Cars without approved prices appear last.
+                $query->orderByRaw(
+                    'approved_prices_avg_price IS NULL'
+                );
+
+                $query->orderBy(
+                    'approved_prices_avg_price'
+                );
+                break;
+
+            case 'price_desc':
+                // Cars without approved prices appear last.
+                $query->orderByRaw(
+                    'approved_prices_avg_price IS NULL'
+                );
+
+                $query->orderByDesc(
+                    'approved_prices_avg_price'
+                );
+                break;
+
+            case 'year_desc':
+            default:
+                $query->orderByDesc('release_year');
+                break;
+        }
+
+        $cars = $query
             ->orderBy('model_name')
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Years for Filter Dropdown
+        |--------------------------------------------------------------------------
+        */
+
+        $years = Car::query()
+            ->select('release_year')
+            ->distinct()
+            ->orderByDesc('release_year')
+            ->pluck('release_year');
+
         return view('cars.index', [
             'cars' => $cars,
+            'years' => $years,
         ]);
     }
 
     /**
-     * Display detailed information for one Hot Wheels car.
+     * Display a single car.
      */
-    public function show(Request $request, Car $car): View
-    {
+    public function show(
+        Request $request,
+        Car $car
+    ): View {
         $isFavorite = $request->user()
             ->favorites()
             ->where('cars.id', $car->id)
@@ -41,13 +153,17 @@ class CarController extends Controller
     }
 
     /**
-     * Save a car to the collector's favorites.
+     * Add a car to collector favorites.
      */
-    public function favorite(Request $request, Car $car): RedirectResponse
-    {
+    public function favorite(
+        Request $request,
+        Car $car
+    ): RedirectResponse {
         $request->user()
             ->favorites()
-            ->syncWithoutDetaching([$car->id]);
+            ->syncWithoutDetaching([
+                $car->id,
+            ]);
 
         return back()->with(
             'status',
@@ -56,10 +172,12 @@ class CarController extends Controller
     }
 
     /**
-     * Remove a car from the collector's favorites.
+     * Remove a car from collector favorites.
      */
-    public function unfavorite(Request $request, Car $car): RedirectResponse
-    {
+    public function unfavorite(
+        Request $request,
+        Car $car
+    ): RedirectResponse {
         $request->user()
             ->favorites()
             ->detach($car->id);

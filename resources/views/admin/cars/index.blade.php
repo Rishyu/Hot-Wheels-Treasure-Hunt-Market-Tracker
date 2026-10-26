@@ -29,11 +29,12 @@
             </div>
         @endif
 
-
         @if ($cars->isEmpty())
 
             <div class="rounded-xl border p-6">
-                {{ __('No cars have been added yet.') }}
+                <flux:text>
+                    {{ __('No cars have been added yet.') }}
+                </flux:text>
             </div>
 
         @else
@@ -52,18 +53,31 @@
                                     {{ $car->model_name }}
                                 </flux:heading>
 
-                                <flux:text>
+                                <flux:text class="mt-1">
                                     {{ $car->series_name }}
                                 </flux:text>
 
-                                <div class="mt-2 text-sm">
-                                    {{ $car->release_year }}
-                                    ·
-                                    {{ $car->category }}
+                                <div class="mt-3 text-sm">
+
+                                    <div>
+                                        <strong>Year:</strong>
+                                        {{ $car->release_year }}
+                                    </div>
+
+                                    <div>
+                                        <strong>Category:</strong>
+                                        {{ $car->category }}
+                                    </div>
+
                                 </div>
 
-                            </div>
+                                @if ($car->description)
+                                    <flux:text class="mt-3">
+                                        {{ $car->description }}
+                                    </flux:text>
+                                @endif
 
+                            </div>
 
                             <div class="flex items-start gap-3">
 
@@ -72,7 +86,6 @@
                                 >
                                     {{ __('Edit') }}
                                 </flux:button>
-
 
                                 <form
                                     method="POST"
