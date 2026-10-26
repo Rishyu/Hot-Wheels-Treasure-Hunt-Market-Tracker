@@ -145,7 +145,17 @@ class CarController extends Controller
             ->favorites()
             ->where('cars.id', $car->id)
             ->exists();
-
+    
+        $car->loadAvg('approvedPrices', 'price');
+    
+        $car->load([
+            'approvedPrices' => function ($query) {
+                $query
+                    ->orderByDesc('approved_at')
+                    ->limit(8);
+            },
+        ]);
+    
         return view('cars.show', [
             'car' => $car,
             'isFavorite' => $isFavorite,

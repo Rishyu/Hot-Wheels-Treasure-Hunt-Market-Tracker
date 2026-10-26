@@ -13,7 +13,7 @@ use Illuminate\View\View;
 class AdminPricingController extends Controller
 {
     /**
-     * Display all pending pricing submissions.
+     * Show all pending price submissions.
      */
     public function index(): View
     {
@@ -29,7 +29,7 @@ class AdminPricingController extends Controller
     }
 
     /**
-     * Approve a pending pricing submission.
+     * Approve a pending price submission.
      */
     public function approve(
         Request $request,
@@ -43,12 +43,10 @@ class AdminPricingController extends Controller
         }
 
         DB::transaction(function () use ($request, $submission) {
-            // Mark the original submission as approved.
             $submission->update([
                 'status' => 'Approved',
             ]);
 
-            // Store the validated price used by collectors.
             ApprovedPrice::create([
                 'price_submission_id' => $submission->id,
                 'car_id' => $submission->car_id,
@@ -57,7 +55,6 @@ class AdminPricingController extends Controller
                 'approved_at' => now(),
             ]);
 
-            // Record who approved the submission.
             AdminAction::create([
                 'admin_id' => $request->user()->id,
                 'price_submission_id' => $submission->id,
@@ -73,7 +70,7 @@ class AdminPricingController extends Controller
     }
 
     /**
-     * Reject a pending pricing submission.
+     * Reject a pending price submission.
      */
     public function reject(
         Request $request,
@@ -87,12 +84,10 @@ class AdminPricingController extends Controller
         }
 
         DB::transaction(function () use ($request, $submission) {
-            // Rejected submissions do not become approved prices.
             $submission->update([
                 'status' => 'Rejected',
             ]);
 
-            // Record who rejected the submission.
             AdminAction::create([
                 'admin_id' => $request->user()->id,
                 'price_submission_id' => $submission->id,

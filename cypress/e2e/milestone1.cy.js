@@ -9,10 +9,31 @@ describe('Hot Wheels Market Tracker - Milestone 1', () => {
     });
 
     it('allows a collector to log in', () => {
-        login();
+        cy.visit('/login');
 
-        cy.location('pathname')
+        // Wait until the redesigned login form is fully rendered.
+        cy.get('[data-test="login-button"]', { timeout: 10000 })
+            .should('be.visible');
+
+        cy.get('input[name="email"]', { timeout: 10000 })
+            .should('be.visible')
+            .should('have.value', '')
+            .type('postmancollector@example.com');
+
+        cy.get('input[name="password"]')
+            .should('be.visible')
+            .type('password', { log: false });
+
+        cy.get('[data-test="login-button"]')
+            .should('be.enabled')
+            .click();
+
+        cy.location('pathname', { timeout: 10000 })
             .should('eq', '/dashboard');
+
+        // Confirm that the authenticated page finished loading.
+        cy.get('body')
+            .should('be.visible');
     });
 
     it('allows a collector to view their profile', () => {
@@ -33,10 +54,12 @@ describe('Hot Wheels Market Tracker - Milestone 1', () => {
         cy.visit('/settings/profile');
 
         cy.get('input[autocomplete="username"]')
+            .should('be.visible')
             .clear()
             .type('cypresscollector');
 
         cy.get('[data-test="update-profile-button"]')
+            .should('be.visible')
             .click();
 
         cy.get('input[autocomplete="username"]')
@@ -61,24 +84,29 @@ describe('Hot Wheels Market Tracker - Milestone 1', () => {
             .should('be.visible');
 
         cy.contains('TH')
-            .should('be.visible');
+            .filter(':visible')
+            .should('exist');
     });
 
     it('rejects an invalid password', () => {
         cy.visit('/login');
 
+        cy.get('[data-test="login-button"]', { timeout: 10000 })
+            .should('be.visible');
+
         cy.get('input[name="email"]')
             .should('be.visible')
+            .should('have.value', '')
             .type('cypress@example.com');
 
         cy.get('input[name="password"]')
             .should('be.visible')
-            .type('wrongpassword');
+            .type('wrongpassword', { log: false });
 
-        cy.get('button[type="submit"]')
+        cy.get('[data-test="login-button"]')
             .click();
 
-        cy.location('pathname')
+        cy.location('pathname', { timeout: 10000 })
             .should('eq', '/login');
     });
 });
@@ -90,17 +118,21 @@ describe('Hot Wheels Market Tracker - Milestone 1', () => {
 function login() {
     cy.visit('/login');
 
+    // Wait for the redesigned login page to finish rendering.
+    cy.get('[data-test="login-button"]', { timeout: 10000 })
+        .should('be.visible');
+
     cy.get('input[name="email"]')
         .should('be.visible')
-        .clear()
+        .should('have.value', '')
         .type('cypress@example.com');
 
     cy.get('input[name="password"]')
         .should('be.visible')
-        .clear()
-        .type('password');
+        .type('password', { log: false });
 
-    cy.get('button[type="submit"]')
+    cy.get('[data-test="login-button"]')
+        .should('be.enabled')
         .click();
 
     cy.location('pathname', { timeout: 10000 })

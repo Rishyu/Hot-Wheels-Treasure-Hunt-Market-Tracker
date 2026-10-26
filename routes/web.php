@@ -7,14 +7,22 @@ use App\Http\Controllers\PriceSubmissionController;
 use App\Http\Controllers\AdminPricingController;
 use App\Http\Controllers\AdminCarController;
 use App\Http\Controllers\AdminLogController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AdminDashboardController;
 
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get(
+        '/dashboard',
+        [DashboardController::class, 'index']
+    )->name('dashboard');
 });
 
-Route::view('/admin', 'admin.index')
+Route::get(
+    '/admin',
+    [AdminDashboardController::class, 'index']
+)
     ->middleware(['auth', EnsureUserIsAdministrator::class])
     ->name('admin.index');
 
