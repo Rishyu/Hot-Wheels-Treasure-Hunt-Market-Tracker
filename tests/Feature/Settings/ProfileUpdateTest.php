@@ -21,11 +21,10 @@ class ProfileUpdateTest extends TestCase
     public function test_profile_information_can_be_updated(): void
     {
         $user = User::factory()->create();
-
         $this->actingAs($user);
 
         $response = Livewire::test('pages::settings.profile')
-            ->set('name', 'Test User')
+            ->set('username', 'hotwheelsfan')
             ->set('email', 'test@example.com')
             ->call('updateProfileInformation');
 
@@ -33,7 +32,8 @@ class ProfileUpdateTest extends TestCase
 
         $user->refresh();
 
-        $this->assertEquals('Test User', $user->name);
+        $this->assertEquals('hotwheelsfan', $user->username);
+        $this->assertEquals('hotwheelsfan', $user->name);
         $this->assertEquals('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
     }
@@ -45,7 +45,7 @@ class ProfileUpdateTest extends TestCase
         $this->actingAs($user);
 
         $response = Livewire::test('pages::settings.profile')
-            ->set('name', 'Test User')
+            ->set('username', 'TestUser')
             ->set('email', $user->email)
             ->call('updateProfileInformation');
 
@@ -85,5 +85,17 @@ class ProfileUpdateTest extends TestCase
         $response->assertHasErrors(['password']);
 
         $this->assertNotNull($user->fresh());
+    }
+    public function test_username_is_required_when_updating_profile(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $response = Livewire::test('pages::settings.profile')
+            ->set('username', '')
+            ->set('email', $user->email)
+            ->call('updateProfileInformation');
+
+        $response->assertHasErrors(['username']);
     }
 }

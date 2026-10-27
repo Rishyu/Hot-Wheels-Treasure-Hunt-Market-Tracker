@@ -1,0 +1,1085 @@
+{
+  "info": {
+    "_postman_id": "1996871d-e21d-48bc-a024-96a8ed9006e7",
+    "name": "Hot Wheels Market Tracker - Milestone 2",
+    "description": "Milestone 2 Postman/Newman coverage for collector flows, pricing moderation, RBAC, admin car CRUD, and error logs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Collector Milestone 2 Flow",
+      "item": [
+        {
+          "name": "01 - Get Registration Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/register"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = Date.now();",
+                  "pm.collectionVariables.set('m2_collector_username', `postmanm2${runId}`);",
+                  "pm.collectionVariables.set('m2_collector_email', `postman.m2.${runId}@example.com`);",
+                  "pm.collectionVariables.set('m2_collector_password', 'password');",
+                  "pm.collectionVariables.set('admin_email', 'admin@test.com');",
+                  "pm.collectionVariables.set('admin_password', 'password');",
+                  "pm.collectionVariables.set('m2_approve_price', (600 + ((runId % 10000) / 100)).toFixed(2));",
+                  "pm.collectionVariables.set('m2_reject_price', (750 + ((runId % 10000) / 100)).toFixed(2));",
+                  "pm.collectionVariables.set('m2_submission_date',",
+                  "    new Date(Date.now() - 86400000).toISOString().slice(0, 10));",
+                  "pm.collectionVariables.set('m2_admin_car_name', `Postman M2 Car ${runId}`);",
+                  "pm.collectionVariables.set('m2_admin_car_updated_name', `Postman M2 Updated ${runId}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function saveCsrf(html) {",
+                  "    let m = html.match(/<meta[^>]+name=[\"']csrf-token[\"'][^>]+content=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/name=[\"']_token[\"'][^>]+value=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/value=[\"']([^\"']+)[\"'][^>]+name=[\"']_token[\"']/i);",
+                  "    pm.test('CSRF token found', () => pm.expect(m).to.not.equal(null));",
+                  "    if (m) pm.environment.set('csrf_token', m[1]);",
+                  "}",
+                  "saveCsrf(pm.response.text());",
+                  "",
+                  "pm.test('Registration page returns 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - Register Unique Collector",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/register",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{m2_collector_username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "{{m2_collector_email}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{m2_collector_password}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password_confirmation",
+                  "value": "{{m2_collector_password}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Collector registration succeeds', () => {",
+                  "    pm.expect([200, 302]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 - Search Cars by Model",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/cars?model=Mazda"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function saveCsrf(html) {",
+                  "    let m = html.match(/<meta[^>]+name=[\"']csrf-token[\"'][^>]+content=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/name=[\"']_token[\"'][^>]+value=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/value=[\"']([^\"']+)[\"'][^>]+name=[\"']_token[\"']/i);",
+                  "    pm.test('CSRF token found', () => pm.expect(m).to.not.equal(null));",
+                  "    if (m) pm.environment.set('csrf_token', m[1]);",
+                  "}",
+                  "saveCsrf(pm.response.text());",
+                  "",
+                  "pm.test('Search page returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Mazda 787B appears', () => pm.expect(pm.response.text()).to.include('Mazda 787B'));",
+                  "const html = pm.response.text();",
+                  "const matches = [...html.matchAll(/href=[\"'][^\"']*\\/cars\\/(\\d+)[\"']/g)];",
+                  "pm.test('Car ID found', () => pm.expect(matches.length).to.be.above(0));",
+                  "if (matches.length) pm.collectionVariables.set('car_id', matches[0][1]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 - Filter Cars by Year and Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/cars?year=2020&category=TH&sort=year_desc"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Filtered catalog returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Filtered catalog contains Mazda', () => {",
+                  "    const b = pm.response.text();",
+                  "    pm.expect(b).to.include('Mazda 787B');",
+                  "    pm.expect(b).to.include('2020');",
+                  "    pm.expect(b).to.include('TH');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 - View Car Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/cars/{{car_id}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function saveCsrf(html) {",
+                  "    let m = html.match(/<meta[^>]+name=[\"']csrf-token[\"'][^>]+content=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/name=[\"']_token[\"'][^>]+value=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/value=[\"']([^\"']+)[\"'][^>]+name=[\"']_token[\"']/i);",
+                  "    pm.test('CSRF token found', () => pm.expect(m).to.not.equal(null));",
+                  "    if (m) pm.environment.set('csrf_token', m[1]);",
+                  "}",
+                  "saveCsrf(pm.response.text());",
+                  "",
+                  "pm.test('Car details return 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Car details contain seeded data', () => {",
+                  "    const b = pm.response.text();",
+                  "    pm.expect(b).to.include('Mazda 787B');",
+                  "    pm.expect(b).to.include('Factory Fresh');",
+                  "    pm.expect(b).to.include('TH');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 - Add Car to Favorites",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/cars/{{car_id}}/favorite",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Add favorite succeeds', () => pm.expect([200,302]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 - Remove Car from Favorites",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/cars/{{car_id}}/favorite",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Remove favorite succeeds', () => pm.expect([200,302]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 - Reject Negative Price",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/cars/{{car_id}}/pricing",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "-1",
+                  "type": "text"
+                },
+                {
+                  "key": "currency",
+                  "value": "CAD",
+                  "type": "text"
+                },
+                {
+                  "key": "submission_date",
+                  "value": "{{m2_submission_date}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Negative price is rejected', () => {",
+                  "    pm.expect([200,302]).to.include(pm.response.code);",
+                  "    pm.expect(pm.response.text().toLowerCase()).to.match(/at least 0|must be at least|price/);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 - Submit Price for Approval",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/cars/{{car_id}}/pricing",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "{{m2_approve_price}}",
+                  "type": "text"
+                },
+                {
+                  "key": "currency",
+                  "value": "CAD",
+                  "type": "text"
+                },
+                {
+                  "key": "submission_date",
+                  "value": "{{m2_submission_date}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Approval candidate submission succeeds', () => {",
+                  "    pm.expect([200,302]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 - Submit Price for Rejection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/cars/{{car_id}}/pricing",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "{{m2_reject_price}}",
+                  "type": "text"
+                },
+                {
+                  "key": "currency",
+                  "value": "CAD",
+                  "type": "text"
+                },
+                {
+                  "key": "submission_date",
+                  "value": "{{m2_submission_date}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rejection candidate submission succeeds', () => {",
+                  "    pm.expect([200,302]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 - Collector Cannot Access Admin",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Collector receives 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 - Collector Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/logout",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Collector logout succeeds', () => pm.expect([200,302]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Admin Pricing Moderation",
+      "item": [
+        {
+          "name": "13 - Get Admin Login Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/login"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function saveCsrf(html) {",
+                  "    let m = html.match(/<meta[^>]+name=[\"']csrf-token[\"'][^>]+content=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/name=[\"']_token[\"'][^>]+value=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/value=[\"']([^\"']+)[\"'][^>]+name=[\"']_token[\"']/i);",
+                  "    pm.test('CSRF token found', () => pm.expect(m).to.not.equal(null));",
+                  "    if (m) pm.environment.set('csrf_token', m[1]);",
+                  "}",
+                  "saveCsrf(pm.response.text());",
+                  "",
+                  "pm.test('Login page returns 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 - Login as Administrator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/login",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "{{admin_email}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{admin_password}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Administrator login succeeds', () => pm.expect([200,302]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 - Administrator Dashboard Access",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function saveCsrf(html) {",
+                  "    let m = html.match(/<meta[^>]+name=[\"']csrf-token[\"'][^>]+content=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/name=[\"']_token[\"'][^>]+value=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/value=[\"']([^\"']+)[\"'][^>]+name=[\"']_token[\"']/i);",
+                  "    pm.test('CSRF token found', () => pm.expect(m).to.not.equal(null));",
+                  "    if (m) pm.environment.set('csrf_token', m[1]);",
+                  "}",
+                  "saveCsrf(pm.response.text());",
+                  "",
+                  "pm.test('Admin dashboard returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Management UI is present', () => {",
+                  "    const b = pm.response.text();",
+                  "    pm.expect(b).to.include('Administrator');",
+                  "    pm.expect(b).to.include('Manage Cars');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 - Capture Pending Pricing IDs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/pricing"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function saveCsrf(html) {",
+                  "    let m = html.match(/<meta[^>]+name=[\"']csrf-token[\"'][^>]+content=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/name=[\"']_token[\"'][^>]+value=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/value=[\"']([^\"']+)[\"'][^>]+name=[\"']_token[\"']/i);",
+                  "    pm.test('CSRF token found', () => pm.expect(m).to.not.equal(null));",
+                  "    if (m) pm.environment.set('csrf_token', m[1]);",
+                  "}",
+                  "saveCsrf(pm.response.text());",
+                  "",
+                  "pm.test('Pricing page returns 200', () => pm.response.to.have.status(200));",
+                  "const html = pm.response.text();",
+                  "",
+                  "function capture(priceVar, idVar) {",
+                  "    const price = '$' + Number(pm.collectionVariables.get(priceVar)).toFixed(2);",
+                  "    const start = html.indexOf(price);",
+                  "    pm.test(`${price} is pending`, () => pm.expect(start).to.be.above(-1));",
+                  "",
+                  "    if (start > -1) {",
+                  "        const end = html.indexOf('</tr>', start);",
+                  "        const row = html.slice(start, end > start ? end : start + 20000);",
+                  "        const m = row.match(/\\/admin\\/pricing\\/(\\d+)\\/approve/);",
+                  "        pm.test(`ID found for ${price}`, () => pm.expect(m).to.not.equal(null));",
+                  "        if (m) pm.collectionVariables.set(idVar, m[1]);",
+                  "    }",
+                  "}",
+                  "",
+                  "capture('m2_approve_price', 'approve_submission_id');",
+                  "capture('m2_reject_price', 'reject_submission_id');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 - Approve Pending Pricing",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/pricing/{{approve_submission_id}}/approve",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Approve request succeeds', () => pm.expect([200,302]).to.include(pm.response.code));",
+                  "pm.test('Approved price leaves pending list', () => {",
+                  "    const p = '$' + Number(pm.collectionVariables.get('m2_approve_price')).toFixed(2);",
+                  "    pm.expect(pm.response.text()).to.not.include(p);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 - Reject Pending Pricing",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/pricing/{{reject_submission_id}}/reject",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reject request succeeds', () => pm.expect([200,302]).to.include(pm.response.code));",
+                  "pm.test('Rejected price leaves pending list', () => {",
+                  "    const p = '$' + Number(pm.collectionVariables.get('m2_reject_price')).toFixed(2);",
+                  "    pm.expect(pm.response.text()).to.not.include(p);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Admin Car Management and Logs",
+      "item": [
+        {
+          "name": "19 - Get Create Car Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/cars/create"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function saveCsrf(html) {",
+                  "    let m = html.match(/<meta[^>]+name=[\"']csrf-token[\"'][^>]+content=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/name=[\"']_token[\"'][^>]+value=[\"']([^\"']+)[\"']/i);",
+                  "    if (!m) m = html.match(/value=[\"']([^\"']+)[\"'][^>]+name=[\"']_token[\"']/i);",
+                  "    pm.test('CSRF token found', () => pm.expect(m).to.not.equal(null));",
+                  "    if (m) pm.environment.set('csrf_token', m[1]);",
+                  "}",
+                  "saveCsrf(pm.response.text());",
+                  "",
+                  "pm.test('Create car page returns 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20 - Create Admin Test Car",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/cars",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "model_name",
+                  "value": "{{m2_admin_car_name}}",
+                  "type": "text"
+                },
+                {
+                  "key": "series_name",
+                  "value": "Postman Test Series",
+                  "type": "text"
+                },
+                {
+                  "key": "release_year",
+                  "value": "2026",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "TH",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Created by Milestone 2 Postman/Newman testing.",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "value": "",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin create car succeeds', () => pm.expect([200,302]).to.include(pm.response.code));",
+                  "const html = pm.response.text();",
+                  "const name = pm.collectionVariables.get('m2_admin_car_name');",
+                  "const start = html.indexOf(name);",
+                  "pm.test('Created car appears in admin list', () => pm.expect(start).to.be.above(-1));",
+                  "",
+                  "if (start > -1) {",
+                  "    const segment = html.slice(start, start + 15000);",
+                  "    const m = segment.match(/\\/admin\\/cars\\/(\\d+)\\/edit/);",
+                  "    pm.test('Created car ID found', () => pm.expect(m).to.not.equal(null));",
+                  "    if (m) pm.collectionVariables.set('admin_car_id', m[1]);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21 - Update Admin Test Car",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/cars/{{admin_car_id}}",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "model_name",
+                  "value": "{{m2_admin_car_updated_name}}",
+                  "type": "text"
+                },
+                {
+                  "key": "series_name",
+                  "value": "Updated Postman Series",
+                  "type": "text"
+                },
+                {
+                  "key": "release_year",
+                  "value": "2026",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "STH",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Updated by Milestone 2 Postman/Newman testing.",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "value": "",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin update car succeeds', () => pm.expect([200,302]).to.include(pm.response.code));",
+                  "pm.test('Updated name appears', () => {",
+                  "    pm.expect(pm.response.text()).to.include(pm.collectionVariables.get('m2_admin_car_updated_name'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "22 - Delete Admin Test Car",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/cars/{{admin_car_id}}",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "_token",
+                  "value": "{{csrf_token}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin delete car succeeds', () => pm.expect([200,302]).to.include(pm.response.code));",
+                  "pm.test('Deleted car no longer appears', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include(pm.collectionVariables.get('m2_admin_car_updated_name'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "23 - View System Error Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/logs"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('System logs page returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('System Error Logs heading is visible', () => {",
+                  "    pm.expect(pm.response.text()).to.include('System Error Logs');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "m2_collector_username",
+      "value": ""
+    },
+    {
+      "key": "m2_collector_email",
+      "value": ""
+    },
+    {
+      "key": "m2_collector_password",
+      "value": "password"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@test.com"
+    },
+    {
+      "key": "admin_password",
+      "value": "password"
+    },
+    {
+      "key": "car_id",
+      "value": ""
+    },
+    {
+      "key": "m2_approve_price",
+      "value": ""
+    },
+    {
+      "key": "m2_reject_price",
+      "value": ""
+    },
+    {
+      "key": "m2_submission_date",
+      "value": ""
+    },
+    {
+      "key": "approve_submission_id",
+      "value": ""
+    },
+    {
+      "key": "reject_submission_id",
+      "value": ""
+    },
+    {
+      "key": "m2_admin_car_name",
+      "value": ""
+    },
+    {
+      "key": "m2_admin_car_updated_name",
+      "value": ""
+    },
+    {
+      "key": "admin_car_id",
+      "value": ""
+    }
+  ]
+}

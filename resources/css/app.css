@@ -23,16 +23,16 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
-    --color-accent-foreground: var(--color-white);
+    --color-accent: #fbbf24;
+    --color-accent-content: #d97706;
+    --color-accent-foreground: #1f2937;
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent: #fbbf24;
+        --color-accent-content: #d97706;
+        --color-accent-foreground: #1f2937;
     }
 }
 
@@ -64,3 +64,179 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+/* =========================================================
+   Hot Wheels Market Tracker
+   base UI theme
+========================================================= */
+
+body {
+    background: #f4f6fa;
+    color: #1f2937;
+}
+
+.hw-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.hw-card:hover {
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.06),
+        0 10px 20px rgba(0, 0, 0, 0.08);
+}
+
+.hw-badge-th {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.375rem;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.hw-badge-sth {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.375rem;
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.hw-primary-button {
+    background: #fbbf24;
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.hw-primary-button:hover {
+    background: #f59e0b;
+}
+
+.hw-muted {
+    color: #6b7280;
+}
+
+.hw-price {
+    color: #111827;
+    font-weight: 800;
+}
+
+/* =========================================================
+   Hot Wheels Market Tracker - light proposal theme
+========================================================= */
+
+html {
+    color-scheme: light;
+}
+
+html,
+body {
+    background: #e9eef5;
+    color: #0f172a;
+}
+
+body {
+    min-height: 100vh;
+}
+
+/*
+Prevent stored Laravel dark-mode preferences from making
+text white on the light application background.
+*/
+html.dark {
+    color-scheme: light;
+}
+
+html.dark body {
+    background: #e9eef5 !important;
+    color: #0f172a !important;
+}
+
+/* Standard application cards */
+
+.hw-card {
+    border: 1px solid #dbe2ea;
+    border-radius: 0.875rem;
+    background: #ffffff;
+    color: #0f172a;
+
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.hw-card:hover {
+    border-color: #cbd5e1;
+
+    box-shadow:
+        0 5px 18px rgba(15, 23, 42, 0.08);
+}
+
+/* TH */
+
+.hw-badge-th {
+    display: inline-flex;
+    align-items: center;
+
+    border-radius: 0.375rem;
+
+    background: #fef3c7;
+    color: #92400e;
+
+    padding: 0.25rem 0.5rem;
+
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* STH */
+
+.hw-badge-sth {
+    display: inline-flex;
+    align-items: center;
+
+    border-radius: 0.375rem;
+
+    background: #fee2e2;
+    color: #b91c1c;
+
+    padding: 0.25rem 0.5rem;
+
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Main proposal-style yellow button */
+
+.hw-primary-button {
+    border-radius: 0.5rem;
+
+    background: #fbbf24;
+    color: #111827;
+
+    padding: 0.65rem 1rem;
+
+    font-weight: 700;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+.hw-primary-button:hover {
+    background: #f59e0b;
+}
+
+.hw-primary-button:active {
+    transform: translateY(1px);
+}
